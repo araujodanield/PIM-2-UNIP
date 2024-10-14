@@ -1,0 +1,7 @@
+Quantidade	Nome		Preço Unit.	Tipo
+---------------------------------------------------------
+100		Banana		2,50		Kg
+120		Maçã		3,50		Un
+80		Uva		5,00		Kg
+95		Arroz		8,90		Kg
+100		Melância	7,20		Un
