@@ -8,35 +8,45 @@
 #include "main.h"
 
 
-char validar_resposta() {
-    char resposta;
+// Função global para remoção de itens nas aplicações de estoque, fornecedores e relatório
+void remover_item(const char* arquivo_origem, const char* arquivo_temp, const char* item_nome, const char* tipo_item, int* encontrado) {
+    FILE *origem = fopen(arquivo_origem, "r");
+    FILE *temp = fopen(arquivo_temp, "w");
 
-    do {
-        printf("Digite S para Sim ou N para Não: ");
-        scanf(" %c", &resposta);
-        resposta = toupper(resposta); // Aceita o caractere definido tanto em maiúsculo quanto minúsculo
-        if (resposta != 'S' && resposta != 'N') {
-            printf("Resposta inválida. Tente novamente.\n");
+    if (!origem || !temp) {
+        printf("Erro ao manipular arquivos.\n");
+        return;
+    };
+
+    *encontrado = 0;  // Inicializa como não encontrado
+
+    // Lê cada linha do arquivo
+    while (fgets(linha, sizeof(linha), origem)) {
+        // Se a linha não contém o item a ser removido, repete essa linha no arquivo temporário
+        if (strstr(linha, item_nome) == NULL) {
+            fputs(linha, temp);
+        } else {
+            *encontrado = 1;  // Marca como encontrado
+            printf("%s %s removido!\n", tipo_item, item_nome);
         };
-    } while (resposta != 'S' && resposta != 'N');
+    };
 
-    return resposta;
+    fclose(origem);
+    fclose(temp);
 };
 
-//
 //
 
 // ESTOQUE:
 
-// Função para exibir o banco de dados dos produtos
+// Função para exibir o arquivo estoque.txt
 void exibir_estoque() {
     setlocale(LC_ALL, "portuguese");
-    char linha[150];
 
     FILE *arquivo = fopen("estoque.txt", "r"); // Abre o arquivo em modo de leitura
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo de estoque. \n\n");
-        return; // Sai da função
+        return;
     };
 
     printf("SERVIDOR - GESTÃO DE ESTOQUE - LISTA DE PRODUTOS: \n\n");
@@ -45,7 +55,6 @@ void exibir_estoque() {
     while (fgets(linha, sizeof(linha), arquivo)) {
         printf("%s", linha); // Exibe cada linha presente no arquivo
     };
-    printf("\n");
     printf("--------------------------------------------------------- \n\n");
 
     fclose(arquivo);
@@ -53,29 +62,19 @@ void exibir_estoque() {
 
 // Função para adicionar produtos ao estoque
 void adicionar_produto() {
-    setlocale(LC_ALL, "portuguese");
-
     char nome[50], unidade[3];
     int quantidade;
     float valor;
 
-    FILE *arquivo = fopen("estoque.txt", "a"); // Abre o arquivo em modo de anexar conteúdo ao original
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o(s) arquivo(s). \n\n");
-        return;
-    };
-
-    // Verificação de prosseguimento usando a função validar_resposta()
     printf("Deseja adicionar um produto? ");
     if (validar_resposta() == 'N') {
-        printf("Operação cancelada. \n");
-        fclose(arquivo);
+        printf("Operação cancelada.\n");
         return;
     };
 
-    printf("Digite o nome do produto à ser adicionado: ");
+    printf("Digite o nome do produto: ");
+    scanf("%[^\n]", nome);
     getchar();
-    scanf("%[^\n]", nome); // Permite a adição de nomes que contenham espaço. Ex: Feijão Carioca
     printf("Digite a quantidade: ");
     scanf("%d", &quantidade);
     printf("Digite o preço unitário: ");
@@ -83,84 +82,44 @@ void adicionar_produto() {
     printf("Digite o tipo de unidade (Kg ou Un): ");
     scanf("%s", unidade);
 
-    // Adiciona o produto ao arquivo
-    fprintf(arquivo, "\n%-12d %-20s %-15.2f %-10s", quantidade, nome, valor, unidade);
-    printf("Produto adicionado ao estoque! \n");
+    void escrever_produto(FILE* arquivo) {
+        fprintf(arquivo, "%-12d %-20s %-15.2f %-10s\n", quantidade, nome, valor, unidade);
+        printf("Produto adicionado ao estoque!\n");
+    };
 
-    fclose(arquivo);
+    manipular_arquivo("estoque.txt", "a", escrever_produto);
 };
 
-// Função para remover um produto do estoque
+// Função para remover produto do estoque
 void remover_produto() {
-    setlocale(LC_ALL, "portuguese");
-
     char nome_produto[50];
-    char linha[150];
     int encontrado = 0;
 
-    FILE *arquivo = fopen("estoque.txt", "r");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo de estoque.\n\n");
-        return;
-    };
+    printf("\nDeseja realmente remover um produto? ");
+    if (validar_resposta() == 'N') return;
 
-    FILE *arquivo_temp = fopen("estoque_temp.txt", "w"); // Cria um arquivo temporário para salvar as alterações
-    if (arquivo_temp == NULL) {
-        printf("Erro ao criar arquivo temporário.\n\n");
-        fclose(arquivo);
-        return;
-    };
+    printf("\nDigite o nome do produto que deseja remover: ");
+    scanf("%[^\n]", nome_produto);
+    getchar();
 
-    // Verificação
-    printf("Deseja remover um produto? ");
-    if (validar_resposta() == 'N') {
-        printf("Operação cancelada.\n");
-        fclose(arquivo);
-        fclose(arquivo_temp);
-        return;
-    };
+    // Remove o produto
+    remover_item("estoque.txt", "estoque_temp.txt", nome_produto, "Produto", &encontrado);
 
-    // Solicitar o nome do produto a ser removido
-    do {
-        printf("Digite o nome do produto que deseja remover: ");
-        getchar(); // Limpa o buffer do compilador
-        scanf("%[^\n]", nome_produto);
-
-        rewind(arquivo); // Reinicia a leitura do arquivo do início
-        encontrado = 0;
-
-        while (fgets(linha, sizeof(linha), arquivo)) {
-            // Verifica se o nome do produto está na linha
-            if (strstr(linha, nome_produto) != NULL) {
-                encontrado = 1; // Produto encontrado
-                printf("Produto %s removido do estoque!\n", nome_produto);
-            } else {
-                // Remove linhas em branco ao gravar no arquivo temporário
-                if (strlen(linha) > 1) { // Evita gravar linhas vazias
-                    fputs(linha, arquivo_temp);
-                };
-            };
+    // Se o item for encontrado o arquivo é atualizado
+    if (encontrado) {
+        if (remove("estoque.txt") == 0 && rename("estoque_temp.txt", "estoque.txt") == 0) {
+            printf("Arquivo atualizado com sucesso!\n");
+        } else {
+            printf("Erro ao atualizar o arquivo!\n");
         };
-
-        if (!encontrado) {
-            printf("Produto não encontrado. Tente novamente.\n");
-        };
-    } while (!encontrado);
-
-    // Fecha os arquivos
-    fclose(arquivo);
-    fclose(arquivo_temp);
-
-    // Substitui o arquivo original pelo temporário
-    remove("estoque.txt");
-    rename("estoque_temp.txt", "estoque.txt");
-
-    printf("Remoção concluída!\n");
+    } else {
+        remove("estoque_temp.txt");
+        printf("Produto não encontrado!\n");
+    };
 };
 
 // Menu para gestão do estoque
 void estoque() {
-
     do {
         printf("SERVIDOR - GESTÃO DE ESTOQUE \n\n");
         printf("1. Exibir estoque \n");
@@ -195,15 +154,12 @@ void estoque() {
 };
 
 //
-//
 
 // FORNECEDORES:
 
-// Função para exibir a lista de fornecedores
+// Função para exibir o arquivo fornecedores.txt
 void exibir_fornecedores() {
     setlocale(LC_ALL, "portuguese");
-
-    char linha[150];
 
     FILE *arquivo = fopen("fornecedores.txt", "r");
     if (arquivo == NULL) {
@@ -215,7 +171,7 @@ void exibir_fornecedores() {
     printf("%-25s %-15s \n", "Nome Fantasia", "CNPJ");
     printf("--------------------------------------------------------- \n");
     while (fgets(linha, sizeof(linha), arquivo)) {
-        printf("%s", linha); // Exibe cada linha presente no arquivo
+        printf("%s", linha);
     };
     printf("--------------------------------------------------------- \n\n");
 
@@ -224,102 +180,53 @@ void exibir_fornecedores() {
 
 // Função para adicionar fornecedores
 void adicionar_fornecedor() {
-    setlocale(LC_ALL, "portuguese");
-
     char nome_fantasia[50], cnpj[15];
 
-    FILE *arquivo = fopen("fornecedores.txt", "a");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo de fornecedores. \n\n");
-        return;
-    };
-
-    // Verificação
     printf("Deseja adicionar um fornecedor? ");
     if (validar_resposta() == 'N') {
-        printf("Operação cancelada. \n");
-        fclose(arquivo);
+        printf("Operação cancelada.\n");
         return;
     };
 
     printf("Digite o nome fantasia do fornecedor: ");
-    getchar();
     scanf("%[^\n]", nome_fantasia);
-
+    getchar();
     printf("Digite o CNPJ do fornecedor (apenas números): ");
-    scanf("%s", cnpj);
+    scanf("%s", &cnpj);
 
-    // Adiciona o fornecedor ao arquivo
-    fprintf(arquivo, "%-25s %-15s\n", nome_fantasia, cnpj);
-    printf("Fornecedor adicionado com sucesso! \n");
+    void escrever_produto(FILE* arquivo) {
+        fprintf(arquivo, "%-25s %-15s\n", nome_fantasia, cnpj);
+        printf("Fornecedor adicionado com sucesso! \n");
+    };
 
-    fclose(arquivo);
+    manipular_arquivo("fornecedores.txt", "a", escrever_produto);
 };
 
 // Função para remover um fornecedor
 void remover_fornecedor() {
-    setlocale(LC_ALL, "portuguese");
-
     char nome_fantasia[50];
-    char linha[150];
     int encontrado = 0;
 
-    FILE *arquivo = fopen("fornecedores.txt", "r");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo de fornecedores. \n\n");
-        return;
-    };
+    printf("\nDeseja realmente remover um fornecedor da lista? ");
+    if (validar_resposta() == 'N') return;
 
-    FILE *temp = fopen("fornecedores_temp.txt", "w");
-    if (temp == NULL) {
-        printf("Erro ao criar arquivo temporário.\n\n");
-        fclose(arquivo);
-        return;
-    };
+    printf("\nDigite o nome fantasia do fornecedor que deseja remover: ");
+    scanf("%[^\n]", nome_fantasia);
+    getchar();
 
-    // Verificação
-    printf("Deseja remover um fornecedor? ");
-    if (validar_resposta() == 'N') {
-        printf("Operação cancelada.\n");
-        fclose(arquivo);
-        fclose(temp);
-        return;
-    };
+    remover_item("fornecedores.txt", "fornecedores_temp.txt", nome_fantasia, "Fornecedor", &encontrado);
 
-    do {
-        printf("Digite o nome fantasia do fornecedor que deseja remover: ");
-        getchar();
-        scanf("%[^\n]", nome_fantasia);
-
-        rewind(arquivo);
-        encontrado = 0;
-
-        while (fgets(linha, sizeof(linha), arquivo)) {
-            // Verifica se o nome do produto está na linha
-            if (strstr(linha, nome_fantasia) != NULL) {
-                encontrado = 1; // Produto encontrado
-                printf("Fornecedor %s removido da lista!\n", nome_fantasia);
-            } else {
-                if (strlen(linha) > 1) {
-                    fputs(linha, temp);
-                };
-            };
+    // Se o item for encontrado o arquivo é atualizado
+    if (encontrado) {
+        if (remove("fornecedores.txt") == 0 && rename("fornecedores_temp.txt", "fornecedores.txt") == 0) {
+            printf("Arquivo atualizado com sucesso!\n");
+        } else {
+            printf("Erro ao atualizar o arquivo!\n");
         };
-
-        if (!encontrado) {
-            printf("Fornecedor não encontrado. Tente novamente.\n");
-        };
-    } while (!encontrado);
-
-    // Fecha os arquivos
-    fclose(arquivo);
-    fclose(temp);
-
-    // Substitui o arquivo original pelo temporário
-    remove("fornecedores.txt");
-    rename("fornecedores_temp.txt", "fornecedores.txt");
-
-    printf("Remoção concluída!\n");
+    } else {
+        remove("fornecedores_temp.txt");
+        printf("Fornecedor não encontrado!\n");
+    };
 };
 
 // Menu para gestão de fornecedores
@@ -358,15 +265,83 @@ void fornecedores() {
 };
 
 //
+
+// RELATÓRIOS
+
+// Função para exibir o conteúdo do arquivo vendas.txt
+void exibir_relatorio() {
+    setlocale(LC_ALL, "portuguese");
+
+    FILE *arquivo = fopen("vendas.txt", "r"); // Abre o arquivo em modo de leitura
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo de estoque. \n\n");
+        return;
+    };
+
+
+    printf("--------------------------------------------------------- \n");
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        printf("%s", linha); // Exibe cada linha presente no arquivo
+    };
+    printf("\n--------------------------------------------------------- \n\n");
+
+    fclose(arquivo);
+};
+
+// Função para resetar o arquivo vendas.txt
+void limpar_relatorio() {
+    printf("\nDeseja realmente limpar o relatório? ");
+    if (validar_resposta() == 'N') {
+        printf("Operação cancelada.\n");
+        return;
+    }
+
+    // Abre o arquivo em modo de escrita e então o fecha, apagando todo o conteúdo e deixando-o em branco
+    FILE *arquivo = fopen("vendas.txt", "w");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
+    }
+
+    fclose(arquivo);
+    printf("Relatório limpo com sucesso!\n");
+};
+
+// Menu para gestão de relatório
+void relatorio() {
+    do {
+        printf("SERVIDOR - RELATORIO DO DIA \n\n");
+        printf("1. Exibir relatorio \n");
+        printf("2. Limpar relatorio \n\n");
+        printf("0. Voltar ao menu anterior \n\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &selecao);
+
+        switch (selecao) {
+            case 1:
+                system("cls"); // Limpa a tela
+                exibir_relatorio();
+                break;
+            case 2:
+                system("cls");
+                limpar_relatorio();
+                break;
+            case 0:
+                system("cls");
+                servidor();
+                break;
+            default:
+                system("cls");
+                printf("Opção inválida! Tente novamente. \n\n");
+        };
+    } while (selecao != 0);
+};
+
 //
 
 //MENU SERVIDOR
-
 int servidor() {
-    selecao = 0; // Variável global declarada em main.c. Só está presente aqui para fins de compreensão do código, pois o próprio compilador já a interpreta como "0" ao ser iniciado.
-
     do {
-        //Exibição inicial da aplicação
         printf("SERVIDOR \n\n");
         printf("1. Gestão de Estoque \n");
         printf("2. Gestão de Fornecedores \n");
@@ -379,15 +354,15 @@ int servidor() {
         switch (selecao) {
             case 1:
                 system("cls"); //Limpar todo conteúdo presente na tela
-                estoque(); //Chama a função estoque()
-                break; //Encerra o loop
+                estoque();
+                break;
             case 2:
                 system("cls");
-                fornecedores(); //*Provisório;
+                fornecedores();
                 break;
             case 3:
                 system("cls");
-                printf("Relatório do dia selecionado. \n\n"); //*Provisório;
+                relatorio();
                 break;
             case 0:
                 system("cls");
