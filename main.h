@@ -3,4 +3,6 @@
 
 extern int selecao; //Informa ao programa que existe uma varíável global com o nome "selecao" declarada em main.c.
 
+extern char linha[150];
+
 #endif //Fim da verificação se MAIN_H está definido.
