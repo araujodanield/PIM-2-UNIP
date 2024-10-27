@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <ctype.h>
 #include "servidor.h"
 #include "caixa.h"
 #include "main.h"
@@ -9,10 +10,8 @@
 
 int hub() {
     setlocale(LC_ALL, "portuguese");
-    selecao = 0; //Variável global declarada em main.c. Só está presente aqui para fins de compreensão do código, pois o próprio compilador já a interpreta como "0" ao ser iniciado
 
     do {
-        // Exibição inicial da aplicação
         printf("Bem vindo! Por favor, selecione uma das aplicações: \n\n");
         printf("1. Servidor \n");
         printf("2. Frente de Caixa \n\n");
