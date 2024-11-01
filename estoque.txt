@@ -6,4 +6,4 @@
 8000         Coco                 12,50           Un        
 11000        Feijao Carioca       2,50            Kg        
 750          Ervilha              5,00            Kg        
-700          Arroz Integral       7,00            Kg        
+700          Arroz Integral       7,50            Kg        

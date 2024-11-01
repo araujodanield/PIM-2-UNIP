@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1730013001 source:c:\users\daniel\desktop\coding\pim\main.c
+1730444054 source:c:\users\daniel\desktop\coding\pim\main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -9,17 +9,18 @@
 	"caixa.h"
 	"hub.h"
 
-1730056212 source:c:\users\daniel\desktop\coding\pim\caixa.c
+1730448642 source:c:\users\daniel\desktop\coding\pim\caixa.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<locale.h>
 	<ctype.h>
+	<math.h>
 	"hub.h"
 	"servidor.h"
 	"main.h"
 
-1730058777 source:c:\users\daniel\desktop\coding\pim\hub.c
+1730058778 source:c:\users\daniel\desktop\coding\pim\hub.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -29,7 +30,7 @@
 	"caixa.h"
 	"main.h"
 
-1730058770 source:c:\users\daniel\desktop\coding\pim\servidor.c
+1730450941 source:c:\users\daniel\desktop\coding\pim\servidor.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -39,11 +40,11 @@
 	"caixa.h"
 	"main.h"
 
-1728682132 c:\users\daniel\desktop\coding\pim\hub.h
+1728682134 c:\users\daniel\desktop\coding\pim\hub.h
 
-1728682068 c:\users\daniel\desktop\coding\pim\servidor.h
+1728682070 c:\users\daniel\desktop\coding\pim\servidor.h
 
-1728682108 c:\users\daniel\desktop\coding\pim\caixa.h
+1728682110 c:\users\daniel\desktop\coding\pim\caixa.h
 
-1730000686 c:\users\daniel\desktop\coding\pim\main.h
+1730000688 c:\users\daniel\desktop\coding\pim\main.h
 
