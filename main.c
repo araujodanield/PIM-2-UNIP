@@ -8,7 +8,7 @@
 #include "hub.h"
 
 int selecao; // Variável global utilizada por funções para fins de seleção de opções na interface visual
-char linha[150]; // Variável global utilizada por funções que utilizam laços de repetição para leitura ou exibição de itens dos arquivos txt
+char linha[256]; // Variável global utilizada por funções que utilizam laços de repetição para leitura ou exibição de itens dos arquivos txt
 
 // Função global para manipular arquivos txt
 void manipular_arquivo(const char* nome_arquivo, const char* modo, void (*funcao)(FILE*)) {
