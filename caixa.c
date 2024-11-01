@@ -3,6 +3,7 @@
 #include <string.h>
 #include <locale.h>
 #include <ctype.h>
+#include <math.h>
 #include "hub.h"
 #include "servidor.h"
 #include "main.h"
@@ -11,7 +12,7 @@
 // Estrutura para itens do carrinho
 typedef struct {
     char nome[50];
-    int quantidade;
+    float quantidade;
     float preco_unitario;
     float total;
 } ItemCarrinho;
@@ -29,18 +30,18 @@ void resetar_carrinho() {
 };
 
 // Função para identificar nome do produto em estoque.txt
-int buscar_produto(const char* nome_produto, int* quantidade, float* preco, char* unidade) {
+int buscar_produto(const char* nome_produto, float* quantidade, float* preco, char* unidade) {
     int encontrado = 0;
 
     // Função interna que compara o nome fornecido pelo usuário com os presentes em estoque.txt
     void ler_produto(FILE* arquivo) {
         char nome[50];
-        int qtd;
+        float qtd;
         float preco_unit;
         char unidade_tmp[10];
 
         while (fgets(linha, sizeof(linha), arquivo)) {
-            if (sscanf(linha, "%d %[^0-9] %f %s", &qtd, nome, &preco_unit, unidade_tmp) == 4) {
+            if (sscanf(linha, "%f %[^0-9] %f %s", &qtd, nome, &preco_unit, unidade_tmp) == 4) {
                 // Remove espaços em branco do final do nome e permite a identificação de nomes com espaçamento (Ex: Arroz Integral)
                 int tamanho = strlen(nome);
                 while (tamanho > 0 && isspace(nome[tamanho-1])) {
@@ -65,7 +66,7 @@ int buscar_produto(const char* nome_produto, int* quantidade, float* preco, char
 };
 
 // Função que cria uma linha com os dados do produto adicionado, para ser exibido no resumo da venda
-void adicionar_ao_carrinho(const char* nome_produto, int quantidade, float preco_unitario) {
+void adicionar_ao_carrinho(const char* nome_produto, float quantidade, float preco_unitario) {
     strcpy(carrinho[qtd_itens_carrinho].nome, nome_produto);
     carrinho[qtd_itens_carrinho].quantidade = quantidade;
     carrinho[qtd_itens_carrinho].preco_unitario = preco_unitario;
@@ -117,30 +118,52 @@ void finalizar_venda() {
 
     // Função interna que realiza a gravação dos dados da venda no txt
     void salvar_venda(FILE* arquivo) {
-        fprintf(arquivo, "\nVenda Nº %d\n", numero_venda++);
-        fprintf(arquivo, "%-15s %-10s %-10s %-10s\n", "Produto", "Qtd", "Preço", "Total");
+        fprintf(arquivo, "\nVenda Nº %d \n\n", numero_venda++);
+        fprintf(arquivo, "%-15s %-10.3s %-8.2s %-10s\n\n", "Produto", "Qtd", "Preço", "Total");
 
         // Imprime cada um dos produtos registrados durante a venda
         for (int i = 0; i < qtd_itens_carrinho; i++) {
-            fprintf(arquivo, "%-15s %-10d R$%-8.2f R$%-8.2f\n",
-                    carrinho[i].nome, carrinho[i].quantidade,
-                    carrinho[i].preco_unitario, carrinho[i].total);
+            fprintf(arquivo, "%-15s %-10.3f R$%-8.2f R$%-8.2f\n", carrinho[i].nome, carrinho[i].quantidade, carrinho[i].preco_unitario, carrinho[i].total);
 
-            int qtd_atual;
+            float qtd_atual;
             float preco;
             char unidade[10];
 
             // Atualiza a quantidade do produto disponível no estoque
             if (buscar_produto(carrinho[i].nome, &qtd_atual, &preco, unidade)) {
-                int nova_qtd = qtd_atual - carrinho[i].quantidade;
+                float nova_qtd = qtd_atual - carrinho[i].quantidade;
 
                 // Atualiza o arquivo estoque.txt
                 FILE* estoque = fopen("estoque.txt", "r");
                 FILE* temp = fopen("estoque_temp.txt", "w");
 
+                char nome_produto[50];
+                float qtd, preco_unit;
+                char unidade_tmp[10];
+                char linha_temp[256];
+
+                // Repetição da lógica utilizada em buscar_produto() para identificar corretamente a linha do produto
                 while (fgets(linha, sizeof(linha), estoque)) {
-                    if (strstr(linha, carrinho[i].nome) != NULL) {
-                        fprintf(temp, "%-12d %-20s %-15.2f %-10s\n", nova_qtd, carrinho[i].nome, preco, unidade);
+                    strcpy(linha_temp, linha);
+
+                    if (sscanf(linha_temp, "%f %[^0-9] %f %s", &qtd, nome_produto, &preco_unit, unidade_tmp) == 4) {
+                        int tamanho = strlen(nome_produto);
+                        while (tamanho > 0 && isspace(nome_produto[tamanho-1])) {
+                            nome_produto[tamanho-1] = '\0';
+                            tamanho--;
+                        };
+
+                        // Compara os nomes presentes no carrinho com os presentes em estoque.txt
+                        if (strcasecmp(carrinho[i].nome, nome_produto) == 0) {
+                            // Verifica se a quantidade do produto é um número inteiro ou fracionado e grava as casas decimais apenas em valores fracionados
+                            if (fmod(nova_qtd, 1.0) == 0.0) {
+                                fprintf(temp, "%-12.0f %-20s %-15.2f %-10s\n", nova_qtd, carrinho[i].nome, preco, unidade);
+                            } else {
+                                fprintf(temp, "%-12.3f %-20s %-15.2f %-10s\n", nova_qtd, carrinho[i].nome, preco, unidade);
+                            };
+                        } else {
+                            fputs(linha, temp);
+                        };
                     } else {
                         fputs(linha, temp);
                     };
@@ -153,8 +176,8 @@ void finalizar_venda() {
             };
         };
 
+        fprintf(arquivo, "\nVALOR TOTAL: R$ %.2f\n", valor_total);
         fprintf(arquivo, "------------------------------------------------\n");
-        fprintf(arquivo, "VALOR TOTAL: R$ %.2f\n", valor_total);
     };
 
     manipular_arquivo("vendas.txt", "a", salvar_venda);
@@ -166,20 +189,19 @@ void finalizar_venda() {
 void exibir_carrinho() {
     do {
         system("cls");
-        printf("\nResumo da Compra:\n");
-        printf("%-15s %-10s %-10s %-10s\n", "Produto", "Qtd", "Preço", "Total");
-        printf("------------------------------------------------\n");
+        printf("\nRESUMO DA COMPRA: \n\n");
+        printf("%-15s %-10s %-10s %-10s\n\n", "Produto", "Qtd", "Preço", "Total");
 
         for (int i = 0; i < qtd_itens_carrinho; i++) {
-            printf("%-15s %-10d R$%-8.2f R$%-8.2f\n",
+            printf("%-15s %-10.3f R$%-8.2f R$%-8.2f\n",
                    carrinho[i].nome, carrinho[i].quantidade,
                    carrinho[i].preco_unitario, carrinho[i].total);
         };
 
-        printf("------------------------------------------------\n");
-        printf("VALOR TOTAL: R$ %.2f\n\n", valor_total);
+        printf("\nVALOR TOTAL: R$ %.2f\n", valor_total);
+        printf("------------------------------------------------ \n\n");
         printf("1 - Finalizar compra\n2 - Remover produto\n0 - Cancelar compra\n");
-        printf("Digite sua opção: ");
+        printf("Digite a opção desejada: ");
 
         scanf("%d", &selecao);
         getchar();
@@ -202,6 +224,7 @@ void exibir_carrinho() {
             case 0:
                 printf("Venda cancelada.\n");
                 resetar_carrinho();
+                caixa();
                 return;
             default:
                 printf("\nOpção inválida!\n");
@@ -235,11 +258,13 @@ void iniciar_venda() {
             };
         } while (!buscar_produto(nome_produto, &qtd_estoque, &preco, unidade));
 
-        int quantidade;
+        float quantidade;
 
         do {
-            printf("Digite a quantidade desejada: ");
-            scanf("%d", &quantidade);
+            printf("Digite a quantidade desejada (Para valores fracionados utilize vírgula): ");
+            scanf("%f", &quantidade);
+            getchar();
+
             if (quantidade > qtd_estoque) {
                 printf("Quantidade indisponível. Tente novamente.\n");
             };
