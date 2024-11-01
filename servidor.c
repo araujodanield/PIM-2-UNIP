@@ -50,7 +50,7 @@ void exibir_estoque() {
     };
 
     printf("SERVIDOR - GESTÃO DE ESTOQUE - LISTA DE PRODUTOS: \n\n");
-    printf("%-12s %-20s %-15s %-10s \n", "Quantidade", "Nome", "Preço Unitário", "Unidade");
+    printf("%-12s %-20s %-15s %-10s \n", "Quantidade", "Nome", "Preço Unitário", "Tipo");
     printf("--------------------------------------------------------- \n");
     while (fgets(linha, sizeof(linha), arquivo)) {
         printf("%s", linha); // Exibe cada linha presente no arquivo
@@ -75,11 +75,11 @@ void adicionar_produto() {
     printf("Digite o nome do produto: ");
     scanf("%[^\n]", nome);
     getchar();
-    printf("Digite a quantidade: ");
+    printf("Digite a quantidade (Para valores fracionados utilize vírgula): ");
     scanf("%d", &quantidade);
     printf("Digite o preço unitário: ");
     scanf("%f", &valor);
-    printf("Digite o tipo de unidade (Kg ou Un): ");
+    printf("Digite o tipo de venda (Kg ou Un): ");
     scanf("%s", unidade);
 
     void escrever_produto(FILE* arquivo) {
@@ -95,26 +95,35 @@ void remover_produto() {
     char nome_produto[50];
     int encontrado = 0;
 
-    printf("\nDeseja realmente remover um produto? ");
+    printf("\nDeseja realmente remover um produto?\n");
     if (validar_resposta() == 'N') return;
 
-    printf("\nDigite o nome do produto que deseja remover: ");
-    scanf("%[^\n]", nome_produto);
-    getchar();
+    do {
+        printf("\nDigite o nome do produto que deseja remover: ");
+        scanf("%[^\n]", nome_produto);
+        getchar();
 
-    // Remove o produto
-    remover_item("estoque.txt", "estoque_temp.txt", nome_produto, "Produto", &encontrado);
+        // Remove o produto
+        remover_item("estoque.txt", "estoque_temp.txt", nome_produto, "Produto", &encontrado);
 
-    // Se o item for encontrado o arquivo é atualizado
+        if (!encontrado) {
+            printf("\nProduto não encontrado. Deseja tentar novamente?\n");
+            if (validar_resposta() == 'N') {
+                system("cls");
+                printf("Finalizado.\n\n");
+                remove("estoque_temp.txt"); // Remove arquivo temporário não necessário
+                return;
+            };
+        };
+    } while (!encontrado);
+
+    // Se o item for encontrado, o arquivo é atualizado
     if (encontrado) {
         if (remove("estoque.txt") == 0 && rename("estoque_temp.txt", "estoque.txt") == 0) {
             printf("Arquivo atualizado com sucesso!\n");
         } else {
             printf("Erro ao atualizar o arquivo!\n");
         };
-    } else {
-        remove("estoque_temp.txt");
-        printf("Produto não encontrado!\n");
     };
 };
 
@@ -207,14 +216,26 @@ void remover_fornecedor() {
     char nome_fantasia[50];
     int encontrado = 0;
 
-    printf("\nDeseja realmente remover um fornecedor da lista? ");
+    printf("\nDeseja realmente remover um fornecedor da lista?\n");
     if (validar_resposta() == 'N') return;
 
-    printf("\nDigite o nome fantasia do fornecedor que deseja remover: ");
-    scanf("%[^\n]", nome_fantasia);
-    getchar();
+    do {
+        printf("\nDigite o nome fantasia do fornecedor que deseja remover: ");
+        scanf("%[^\n]", nome_fantasia);
+        getchar();
 
-    remover_item("fornecedores.txt", "fornecedores_temp.txt", nome_fantasia, "Fornecedor", &encontrado);
+        remover_item("fornecedores.txt", "fornecedores_temp.txt", nome_fantasia, "Fornecedor", &encontrado);
+
+        if (!encontrado) {
+            printf("\nFornecedor não encontrado. Deseja tentar novamente?\n");
+            if (validar_resposta() == 'N') {
+                system("cls");
+                printf("Finalizado.\n\n");
+                remove("fornecedores_temp.txt"); // Remove arquivo temporário não necessário
+                return;
+            };
+        };
+    } while (!encontrado);
 
     // Se o item for encontrado o arquivo é atualizado
     if (encontrado) {
