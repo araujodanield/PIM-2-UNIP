@@ -78,16 +78,20 @@ void adicionar_ao_carrinho(const char* nome_produto, float quantidade, float pre
 // Função para remoção de itens antes de finalizar a venda
 void remover_item_carrinho() {
     if (qtd_itens_carrinho == 0) {
-        printf("Carrinho vazio!\n");
+        printf("Carrinho vazio! \n\n");
         return;
     };
 
     printf("\nDeseja realmente remover um produto? ");
-    if (validar_resposta() == 'N') return;
+    if (validar_resposta() == 'N') {
+        system("cls");
+        printf("Operação cancelada.\n\n");
+        return;
+    };
 
     printf("\nProdutos no carrinho:\n");
     for (int i = 0; i < qtd_itens_carrinho; i++) {
-        printf("- %s (Quantidade: %d)\n", carrinho[i].nome, carrinho[i].quantidade);
+        printf("- %s (Quantidade: %.3f)\n", carrinho[i].nome, carrinho[i].quantidade);
     };
 
     char nome_produto[50];
@@ -105,11 +109,11 @@ void remover_item_carrinho() {
                 carrinho[j] = carrinho[j + 1];
             };
             qtd_itens_carrinho--;
-            printf("Produto removido com sucesso!\n");
+            printf("Produto removido com sucesso! \n\n");
             return;
         };
     };
-    printf("Produto não encontrado no carrinho!\n");
+    printf("Produto não encontrado no carrinho! \n\n");
 };
 
 // Função que registra a venda finalizada no arquivo vendas.txt
@@ -181,7 +185,8 @@ void finalizar_venda() {
     };
 
     manipular_arquivo("vendas.txt", "a", salvar_venda);
-    printf("Venda finalizada com sucesso!\n");
+    system("cls");
+    printf("Venda finalizada com sucesso! \n\n");
     resetar_carrinho();
 };
 
@@ -201,7 +206,7 @@ void exibir_carrinho() {
         printf("\nVALOR TOTAL: R$ %.2f\n", valor_total);
         printf("------------------------------------------------ \n\n");
         printf("1 - Finalizar compra\n2 - Remover produto\n0 - Cancelar compra\n");
-        printf("Digite a opção desejada: ");
+        printf("\nDigite a opção desejada: ");
 
         scanf("%d", &selecao);
         getchar();
@@ -222,7 +227,8 @@ void exibir_carrinho() {
                 };
                 break;
             case 0:
-                printf("Venda cancelada.\n");
+                system("cls");
+                printf("Venda cancelada. \n\n");
                 resetar_carrinho();
                 caixa();
                 return;
@@ -238,43 +244,71 @@ void exibir_carrinho() {
 void iniciar_venda() {
     printf("Deseja iniciar uma nova venda? ");
     if (validar_resposta() == 'N') {
-        printf("Operação cancelada.\n");
+        system("cls");
+        printf("Operação cancelada.\n\n");
         return;
     };
 
     do {
         char nome_produto[50];
-        int qtd_estoque;
+        float qtd_estoque;
         float preco;
         char unidade[10];
+        float quantidade;
+        int quantidade_valida = 0;  // Verificação para saber se a quantidade é válida
 
         do {
-            printf("Digite o nome do produto: ");
+            printf("\nDigite o nome do produto: ");
             scanf("%[^\n]", nome_produto);
             getchar();
 
             if (!buscar_produto(nome_produto, &qtd_estoque, &preco, unidade)) {
-                printf("Produto não encontrado. Tente novamente.\n");
+                printf("Produto não encontrado. Tente novamente. \n");
             };
         } while (!buscar_produto(nome_produto, &qtd_estoque, &preco, unidade));
 
-        float quantidade;
-
-        do {
+        // Loop para verificar a quantidade
+        while (!quantidade_valida) {
             printf("Digite a quantidade desejada (Para valores fracionados utilize vírgula): ");
             scanf("%f", &quantidade);
             getchar();
 
+            // Verifica se a quantidade adicionada é maior que a disponível em estoque
             if (quantidade > qtd_estoque) {
-                printf("Quantidade indisponível. Tente novamente.\n");
-            };
-        } while (quantidade > qtd_estoque);
+                printf("Quantidade indisponível no estoque. Quantidade máxima disponível: %.3f %s \n\n", qtd_estoque, unidade);
+                printf("Deseja tentar novamente? ");
+                if (validar_resposta() == 'N') { // Se a resposta for não, pergunta se quer adicionar outro produto
 
-        adicionar_ao_carrinho(nome_produto, quantidade, preco);
-        printf("Deseja adicionar mais produtos? ");
+                    printf("Deseja adicionar outro produto? ");
+                    if (validar_resposta() == 'N') { // Se a resposta for não, e já houver produtos no carrinho, exibe o resumo da compra
+                        if (qtd_itens_carrinho > 0) {
+                            exibir_carrinho();
+                        } else { // Cancela a operação e retorna ao menu inicial de caixa.c
+                            system("cls");
+                            printf("Operação cancelada.\n\n");
+                            caixa();
+                        };
+                        return;
+                    };
+                    break;  // Sai do loop de quantidade para permitir escolher outro produto
+                };
+            } else {
+                quantidade_valida = 1;  // Quantidade se torna válida, permitindo prosseguir
+                adicionar_ao_carrinho(nome_produto, quantidade, preco);
+                printf("\nProduto adicionado ao carrinho!\n");
+            };
+        };
+
+        // Caso um produto seja adicionado com sucesso, pergunta se deseja adicionar mais
+        if (quantidade_valida) {
+            printf("\nDeseja adicionar mais produtos? ");
+        };
     } while (validar_resposta() == 'S');
 
-    exibir_carrinho();
+    // Ao final das interações, se houver mais de 0 itens no carrinho, exibe o resumo da compra
+    if (qtd_itens_carrinho > 0) {
+        exibir_carrinho();
+    };
 };
 
 int caixa() {
