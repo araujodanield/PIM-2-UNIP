@@ -1,9 +1,11 @@
 500          Banana               5,00            Kg        
-700          Arroz                7,00            Kg        
+700          Laranja              7,00            Kg        
 10000        Melancia             10,00           Un       
 6000         Pera                 8,50            Un        
-12000        Manga                10,00           Un
 8000         Coco                 12,50           Un        
 11000        Feijao Carioca       2,50            Kg        
 750          Ervilha              5,00            Kg        
-700          Arroz Integral       7,50            Kg        
+700          Arroz                7,50            Kg        
+5454,396     Manga                10,00           Un        
+520          Damasco              5,00            Un        
+798,554      Abacaxi              7,50            Un        
