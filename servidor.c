@@ -213,10 +213,10 @@ void adicionar_fornecedor() {
     scanf("%[^\n]", nome_fantasia);
     getchar();
     printf("Digite o CNPJ do fornecedor (apenas números): ");
-    scanf("%d", &cnpj);
+    scanf("%s", &cnpj);
 
     void escrever_produto(FILE* arquivo) {
-        fprintf(arquivo, "%-25s %-15d\n", nome_fantasia, cnpj);
+        fprintf(arquivo, "%-25s %-15s\n", nome_fantasia, cnpj);
         system("cls");
         printf("Fornecedor adicionado com sucesso! \n\n");
     };
