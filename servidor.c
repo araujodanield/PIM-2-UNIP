@@ -27,7 +27,7 @@ void remover_item(const char* arquivo_origem, const char* arquivo_temp, const ch
             fputs(linha, temp);
         } else {
             *encontrado = 1;  // Marca como encontrado
-            printf("%s %s removido!\n", tipo_item, item_nome);
+            printf("\n%s %s removido! \n\n", tipo_item, item_nome);
         };
     };
 
@@ -63,12 +63,13 @@ void exibir_estoque() {
 // Função para adicionar produtos ao estoque
 void adicionar_produto() {
     char nome[50], unidade[3];
-    int quantidade;
+    float quantidade;
     float valor;
 
     printf("Deseja adicionar um produto? ");
     if (validar_resposta() == 'N') {
-        printf("Operação cancelada.\n");
+        system("cls");
+        printf("Operação cancelada.\n\n");
         return;
     };
 
@@ -76,15 +77,21 @@ void adicionar_produto() {
     scanf("%[^\n]", nome);
     getchar();
     printf("Digite a quantidade (Para valores fracionados utilize vírgula): ");
-    scanf("%d", &quantidade);
+    scanf("%f", &quantidade);
     printf("Digite o preço unitário: ");
     scanf("%f", &valor);
     printf("Digite o tipo de venda (Kg ou Un): ");
     scanf("%s", unidade);
 
     void escrever_produto(FILE* arquivo) {
-        fprintf(arquivo, "%-12d %-20s %-15.2f %-10s\n", quantidade, nome, valor, unidade);
-        printf("Produto adicionado ao estoque!\n");
+        // Verificar se a quantidade é um número inteiro
+        if (quantidade == (int)quantidade) {
+            fprintf(arquivo, "%-12d %-20s %-15.2f %-10s\n", (int)quantidade, nome, valor, unidade);
+        } else {
+            fprintf(arquivo, "%-12.3f %-20s %-15.2f %-10s\n", quantidade, nome, valor, unidade);
+        };
+        system("cls");
+        printf("Produto adicionado ao estoque! \n\n");
     };
 
     manipular_arquivo("estoque.txt", "a", escrever_produto);
@@ -96,7 +103,11 @@ void remover_produto() {
     int encontrado = 0;
 
     printf("\nDeseja realmente remover um produto?\n");
-    if (validar_resposta() == 'N') return;
+    if (validar_resposta() == 'N') {
+        system("cls");
+        printf("Operação cancelada.\n\n");
+        return;
+    };
 
     do {
         printf("\nDigite o nome do produto que deseja remover: ");
@@ -110,7 +121,7 @@ void remover_produto() {
             printf("\nProduto não encontrado. Deseja tentar novamente?\n");
             if (validar_resposta() == 'N') {
                 system("cls");
-                printf("Finalizado.\n\n");
+                printf("Operação cancelada.\n\n");
                 remove("estoque_temp.txt"); // Remove arquivo temporário não necessário
                 return;
             };
@@ -120,9 +131,9 @@ void remover_produto() {
     // Se o item for encontrado, o arquivo é atualizado
     if (encontrado) {
         if (remove("estoque.txt") == 0 && rename("estoque_temp.txt", "estoque.txt") == 0) {
-            printf("Arquivo atualizado com sucesso!\n");
+            printf("Arquivo atualizado com sucesso! \n\n");
         } else {
-            printf("Erro ao atualizar o arquivo!\n");
+            printf("Erro ao atualizar o arquivo! \n\n");
         };
     };
 };
@@ -193,19 +204,21 @@ void adicionar_fornecedor() {
 
     printf("Deseja adicionar um fornecedor? ");
     if (validar_resposta() == 'N') {
-        printf("Operação cancelada.\n");
+        system("cls");
+        printf("Operação cancelada.\n\n");
         return;
     };
 
-    printf("Digite o nome fantasia do fornecedor: ");
+    printf("\nDigite o nome fantasia do fornecedor: ");
     scanf("%[^\n]", nome_fantasia);
     getchar();
     printf("Digite o CNPJ do fornecedor (apenas números): ");
-    scanf("%s", &cnpj);
+    scanf("%d", &cnpj);
 
     void escrever_produto(FILE* arquivo) {
-        fprintf(arquivo, "%-25s %-15s\n", nome_fantasia, cnpj);
-        printf("Fornecedor adicionado com sucesso! \n");
+        fprintf(arquivo, "%-25s %-15d\n", nome_fantasia, cnpj);
+        system("cls");
+        printf("Fornecedor adicionado com sucesso! \n\n");
     };
 
     manipular_arquivo("fornecedores.txt", "a", escrever_produto);
@@ -217,10 +230,14 @@ void remover_fornecedor() {
     int encontrado = 0;
 
     printf("\nDeseja realmente remover um fornecedor da lista?\n");
-    if (validar_resposta() == 'N') return;
+    if (validar_resposta() == 'N') {
+        system("cls");
+        printf("Operação cancelada.\n\n");
+        return;
+    };
 
     do {
-        printf("\nDigite o nome fantasia do fornecedor que deseja remover: ");
+        printf("\nDigite o nome ou CNPJ do fornecedor que deseja remover: ");
         scanf("%[^\n]", nome_fantasia);
         getchar();
 
@@ -230,7 +247,7 @@ void remover_fornecedor() {
             printf("\nFornecedor não encontrado. Deseja tentar novamente?\n");
             if (validar_resposta() == 'N') {
                 system("cls");
-                printf("Finalizado.\n\n");
+                printf("Operação cancelada.\n\n");
                 remove("fornecedores_temp.txt"); // Remove arquivo temporário não necessário
                 return;
             };
@@ -240,13 +257,13 @@ void remover_fornecedor() {
     // Se o item for encontrado o arquivo é atualizado
     if (encontrado) {
         if (remove("fornecedores.txt") == 0 && rename("fornecedores_temp.txt", "fornecedores.txt") == 0) {
-            printf("Arquivo atualizado com sucesso!\n");
+            printf("Arquivo atualizado com sucesso! \n\n");
         } else {
-            printf("Erro ao atualizar o arquivo!\n");
+            printf("Erro ao atualizar o arquivo! \n\n");
         };
     } else {
         remove("fornecedores_temp.txt");
-        printf("Fornecedor não encontrado!\n");
+        printf("Fornecedor não encontrado! \n\n");
     };
 };
 
@@ -313,19 +330,21 @@ void exibir_relatorio() {
 void limpar_relatorio() {
     printf("\nDeseja realmente limpar o relatório? ");
     if (validar_resposta() == 'N') {
-        printf("Operação cancelada.\n");
+        system("cls");
+        printf("Operação cancelada.\n\n");
         return;
-    }
+    };
 
     // Abre o arquivo em modo de escrita e então o fecha, apagando todo o conteúdo e deixando-o em branco
     FILE *arquivo = fopen("vendas.txt", "w");
     if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
+        printf("Erro ao abrir o arquivo. \n\n");
         return;
-    }
+    };
 
     fclose(arquivo);
-    printf("Relatório limpo com sucesso!\n");
+    system("cls");
+    printf("Relatório limpo com sucesso! \n\n");
 };
 
 // Menu para gestão de relatório
